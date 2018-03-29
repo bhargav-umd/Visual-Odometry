@@ -1,7 +1,7 @@
 clear all;
 close all;
 % Video Writer
-v = VideoWriter('Test15t','MPEG-4');
+v = VideoWriter('Testv8','MPEG-4');
 v.FrameRate = 30;
 open(v);
 
@@ -26,7 +26,7 @@ cd ./stereo/centre
 images.filename = ls('*png');
 %  size_im = size(images.filename);
 
-for Image_seq_number = 200:3872
+for Image_seq_number = 110:3872
 
 cd 'E:\2 sem\Perception\Project 2\Visual-Odometry\Oxford_dataset\stereo\centre'
 
@@ -79,34 +79,34 @@ inliers_2 = [P2_X(inliersIndex) P2_Y(inliersIndex)];
 
 %% Essential Matrix
 p1=p1';p2=p2';
-[E1, R1, t1] = Essential_Mat(F,k,cameraParams, p1, p2);
+[E1, R1, t1] = Essential_Mat2(F,k,p1, p2);
 
 %Using Matlab Functions
 [E2, R2, t2] = Essential_Mat(F_RANSAC,k,cameraParams, inliers_1, inliers_2);
 
 %% Positions of Points 
 %Without using Matlab functions
-Rotation_pos_1 = R1 * position_1';
-position_1 = Rotation_pos_1 + t1 ;
-
-% Rotation_pos_1 = R1 * Rotation_pos_1;
-% position_1 = position_1 + t1 * Rotation_pos_1;
+% Rotation_pos_1 = R1 * position_1';
+% position_1 = Rotation_pos_1 + t1 ;
+% % pos2 + t2 * Rpos2
+Rotation_pos_1 = R1 * Rotation_pos_1;
+position_1 = position_1 + t1 * Rotation_pos_1;
 
 % Using Matlab functions 
-Rotation_pos_2 = R2 * position_2';
-position_2 = Rotation_pos_2 + t2;
+% Rotation_pos_2 = R2 * position_2';
+% position_2 = Rotation_pos_2 + t2;
 
-% Rotation_pos_2 = R2 * Rotation_pos_2;
-% position_2 = position_2 + t2 * Rotation_pos_2;
+Rotation_pos_2 = R2 * Rotation_pos_2;
+position_2 = position_2 + t2 * Rotation_pos_2;
 
 Drift_traj(Image_seq_number) = norm(position_2 - position_1);
 
-figure(1)
-subplot(2,1,1)
-showMatchedFeatures(I_a1,I_b1,matchedPoints1,matchedPoints2);
-title('Matched Features')
-
-subplot(2,1,2)
+% figure(1)
+% subplot(2,1,1)
+% showMatchedFeatures(I_a1,I_b1,matchedPoints1,matchedPoints2);
+% title('Matched Features')
+% 
+% subplot(2,1,2)
 plot(position_1(1),position_1(3),'b*',position_2(1),position_2(3),'ro')
 % title([' Blue * =Est.,RedO = Est. Using Matlab, Error is: ' num2str(Drift_traj(Image_seq_number))])
 title('Blue:Custom Function,Red:Maltab inbuilt Function')

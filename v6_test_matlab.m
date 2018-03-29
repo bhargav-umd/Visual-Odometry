@@ -12,12 +12,9 @@ k = [fx, 0, cx;
 0, fy, cy;
 0, 0, 1];
 cameraParams = cameraParameters('IntrinsicMatrix',k');
-Drift_traj = zeros(3873,1);
+% Drift_traj = zeros(3873,1);
 pos_init = [0 0 0];
-position_1 = [0 0 0];
-Rotation_pos_1 = [1 0 0;
-                 0 1 0
-                 0 0 1];
+
 position_2 = [0 0 0];
 Rotation_pos_2 = [1 0 0;
                   0 1 0
@@ -26,7 +23,7 @@ cd ./stereo/centre
 images.filename = ls('*png');
 %  size_im = size(images.filename);
 
-for Image_seq_number = 200:3872
+for Image_seq_number = 750:3872
 
 cd 'E:\2 sem\Perception\Project 2\Visual-Odometry\Oxford_dataset\stereo\centre'
 
@@ -63,11 +60,6 @@ matchedPoints2 = valid_points2(indexPairs(:,2),:);
 %Reference:https://www.mathworks.com/help/vision/ref/estimatefundamentalmatrix.html
 [F_RANSAC, inliersIndex] = estimateFundamentalMatrix(matchedPoints1,matchedPoints2,'Method','RANSAC','NumTrials',2000,'DistanceThreshold',1e-3);
 
-p1=matchedPoints1.Location;
-p2=matchedPoints2.Location;
-% Fnda Matrix Reference :http://inside.mines.edu/~whoff/courses/EENG512/lectures/
-p1=p1';p2=p2';
-F = Fnda_matrix(p1, p2);
 
 P1_X = matchedPoints1.Location(:,1);
 P1_Y = matchedPoints1.Location(:,2);
@@ -77,39 +69,30 @@ P2_X = matchedPoints2.Location(:,1);
 P2_Y = matchedPoints2.Location(:,2);
 inliers_2 = [P2_X(inliersIndex) P2_Y(inliersIndex)];
 
-%% Essential Matrix
-p1=p1';p2=p2';
-[E1, R1, t1] = Essential_Mat(F,k,cameraParams, p1, p2);
 
 %Using Matlab Functions
-[E2, R2, t2] = Essential_Mat(F_RANSAC,k,cameraParams, inliers_1, inliers_2);
+% [E2, R2, t2] = Essential_Mat(F_RANSAC,k,cameraParams, inliers_1, inliers_2);
+[relativeOrientation,relativeLocation] = relativeCameraPose(F_RANSAC,cameraParams,inliers_1,inliers_2);
 
-%% Positions of Points 
-%Without using Matlab functions
-Rotation_pos_1 = R1 * position_1';
-position_1 = Rotation_pos_1 + t1 ;
 
-% Rotation_pos_1 = R1 * Rotation_pos_1;
-% position_1 = position_1 + t1 * Rotation_pos_1;
-
-% Using Matlab functions 
-Rotation_pos_2 = R2 * position_2';
-position_2 = Rotation_pos_2 + t2;
+Rotation_pos_2 = relativeOrientation * position_2';
+position_2 = Rotation_pos_2 + relativeLocation';
 
 % Rotation_pos_2 = R2 * Rotation_pos_2;
 % position_2 = position_2 + t2 * Rotation_pos_2;
 
-Drift_traj(Image_seq_number) = norm(position_2 - position_1);
+% Drift_traj(Image_seq_number) = norm(position_2 - position_1);
 
 figure(1)
-subplot(2,1,1)
-showMatchedFeatures(I_a1,I_b1,matchedPoints1,matchedPoints2);
-title('Matched Features')
+% subplot(2,1,1)
+% showMatchedFeatures(I_a1,I_b1,matchedPoints1,matchedPoints2);
+% title('Matched Features')
 
-subplot(2,1,2)
-plot(position_1(1),position_1(3),'b*',position_2(1),position_2(3),'ro')
+% subplot(2,1,2)
+% plot(position_1(1),position_1(3),'b*',position_2(1),position_2(3),'ro')
+plot(-position_2(1),position_2(3),'ro')
 % title([' Blue * =Est.,RedO = Est. Using Matlab, Error is: ' num2str(Drift_traj(Image_seq_number))])
-title('Blue:Custom Function,Red:Maltab inbuilt Function')
+% title('Blue:Custom Function,Red:Maltab inbuilt Function')
 % text(200,200,Drift_traj(Image_seq_number),'Color','red','FontSize',20)
 
 % positionVector = [0.3, 0.1, 0.3, 0.2];
@@ -124,8 +107,8 @@ writeVideo(v,frame);
 pause(0.001);
 end
 
-Total_Drift = rms(Drift_traj);
-Disp(Total_Drift);
+% Total_Drift = rms(Drift_traj);
+% Disp(Total_Drift);
 
 cd ../../..
 close(v)

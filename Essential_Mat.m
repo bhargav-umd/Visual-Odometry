@@ -81,7 +81,6 @@ if tNorm ~= 0
     t = t ./ tNorm;
 end
 
-
 R = R';
-t = -t * R;
+t = -t;
 end

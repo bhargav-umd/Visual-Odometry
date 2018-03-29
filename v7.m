@@ -1,7 +1,7 @@
 clear all;
 close all;
 % Video Writer
-v = VideoWriter('Test15t','MPEG-4');
+v = VideoWriter('Test17','MPEG-4');
 v.FrameRate = 30;
 open(v);
 
@@ -14,11 +14,11 @@ k = [fx, 0, cx;
 cameraParams = cameraParameters('IntrinsicMatrix',k');
 Drift_traj = zeros(3873,1);
 pos_init = [0 0 0];
-position_1 = [0 0 0];
+position_1 = [0 0 0]';
 Rotation_pos_1 = [1 0 0;
                  0 1 0
                  0 0 1];
-position_2 = [0 0 0];
+position_2 = [0 0 0]';
 Rotation_pos_2 = [1 0 0;
                   0 1 0
                   0 0 1];
@@ -26,7 +26,7 @@ cd ./stereo/centre
 images.filename = ls('*png');
 %  size_im = size(images.filename);
 
-for Image_seq_number = 200:3872
+for Image_seq_number = 156:3872
 
 cd 'E:\2 sem\Perception\Project 2\Visual-Odometry\Oxford_dataset\stereo\centre'
 
@@ -78,22 +78,27 @@ P2_Y = matchedPoints2.Location(:,2);
 inliers_2 = [P2_X(inliersIndex) P2_Y(inliersIndex)];
 
 %% Essential Matrix
-p1=p1';p2=p2';
-[E1, R1, t1] = Essential_Mat(F,k,cameraParams, p1, p2);
+% p1=p1';p2=p2';
+p1(3,:)=1;
+p2(3,:)=1;
+% [E1, R1, t1] = Essential_Mat(F,k,cameraParams, p1, p2);
+[E1,R1,t1] =Essential_Mat1(F,k,p1,p2);
 
 %Using Matlab Functions
-[E2, R2, t2] = Essential_Mat(F_RANSAC,k,cameraParams, inliers_1, inliers_2);
-
+% [E2, R2, t2] = Essential_Mat(F_RANSAC,k,cameraParams, inliers_1, inliers_2);
+[relativeOrientation,relativeLocation] = relativeCameraPose(F_RANSAC,cameraParams,inliers_1,inliers_2);
+R2=relativeOrientation;
+t2 =relativeLocation';
 %% Positions of Points 
 %Without using Matlab functions
-Rotation_pos_1 = R1 * position_1';
+Rotation_pos_1 = R1 * position_1;
 position_1 = Rotation_pos_1 + t1 ;
 
 % Rotation_pos_1 = R1 * Rotation_pos_1;
 % position_1 = position_1 + t1 * Rotation_pos_1;
 
 % Using Matlab functions 
-Rotation_pos_2 = R2 * position_2';
+Rotation_pos_2 = R2 * position_2;
 position_2 = Rotation_pos_2 + t2;
 
 % Rotation_pos_2 = R2 * Rotation_pos_2;
@@ -103,13 +108,15 @@ Drift_traj(Image_seq_number) = norm(position_2 - position_1);
 
 figure(1)
 subplot(2,1,1)
+drawnow
 showMatchedFeatures(I_a1,I_b1,matchedPoints1,matchedPoints2);
 title('Matched Features')
 
 subplot(2,1,2)
+drawnow
 plot(position_1(1),position_1(3),'b*',position_2(1),position_2(3),'ro')
 % title([' Blue * =Est.,RedO = Est. Using Matlab, Error is: ' num2str(Drift_traj(Image_seq_number))])
-title('Blue:Custom Function,Red:Maltab inbuilt Function')
+title('Blue:Calculated Position,Red:Position Using Matlab Function')
 % text(200,200,Drift_traj(Image_seq_number),'Color','red','FontSize',20)
 
 % positionVector = [0.3, 0.1, 0.3, 0.2];
