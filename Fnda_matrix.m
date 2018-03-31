@@ -1,6 +1,6 @@
-function [F,R,T] = Fnda_matrix(p1, p2)
+function [F,fError] = Fnda_matrix(p1, p2)
 % Fit a fundamental matrix to the corresponding points in p1 and p2.
-% p1,p2 are each 3xN in size, where each column is [x;y;1].
+% p1,p2 are each 2xN in size, where each column is [x;y;1].
 
 % Check if they passed in a 2xN matrix instead of a 3xN matrix.
 if size(p1,1) == 2
@@ -58,7 +58,8 @@ Fscale = reshape(x,3,3)';
 [U,D,V] = svd(Fscale);
 Fscale = U*diag([D(1,1) D(2,2) 0])*V';
 % Undo scaling
-F = T1' * Fscale * T2;
+F = T2' * Fscale * T1;
+fError = false; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %our fundamental matrix 
 end
